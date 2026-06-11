@@ -1,61 +1,23 @@
-# Adrian Cantrill SAP-C02 — Per-Lesson Study Tracker
+# Adrian Cantrill SAP-C02 Tracker
 
-A standalone HTML tracker for every lesson in [Adrian Cantrill's AWS Solutions Architect Professional course](https://learn.cantrill.io/).
+Per-lesson gap analysis tool for [Adrian Cantrill's AWS Solutions Architect Professional course](https://learn.cantrill.io/).
 
-**No install. No account. Open the file in your browser.**
-
----
+![Tracker Preview](assets/adrian-preview.jpg)
 
 ## What it does
 
-- Every lesson tagged: `Watch` / `Fast (1.75x)` / `Skip` / `Supplement` / `Demo-Skip`  
-- Tailored for someone with a strong infra background (CKA/CKS, 30yr IT) — skips what you already know
-- Checkbox per lesson, progress bar, filter by action type
-- **Gap analysis for post-2021 AWS services** — the course was built in 2020/2021 and SAP-C02 tests newer services
+- Every lesson (1–398) in order with a recommended action: **Watch**, **Fast (1.75x)**, **Skip**, or **Demo-Skip**
+- **32 supplement entries** inserted inline at the right lesson — covering every post-2021 AWS gap (IAM Identity Center, MGN, Inspector v2, Aurora Serverless v2, Network Firewall, and more)
+- Badge system: `OUTDATED` (Adrian's content superseded), `GAP` (not covered at all), `EXTRA` (bonus depth)
+- `+supp` button on lessons with supplements — hover for tooltip, click to jump to the supplement row
+- Per-lesson notes — click 📝 on hover, type, saves to localStorage. Gold highlight when a note exists, tooltip on hover
+- Progress tracking with localStorage — survives page reload
+- Filter by action type or "Not done yet"
 
-## The gap analysis
+## How to use
 
-Every link on a lesson is tagged:
+Download `adrian_per_lesson_tracker.html` and open it in any browser. No server needed, no install.
 
-| Tag | Meaning |
-|-----|---------|
-| 🔴 `OUTDATED` | Adrian's content is wrong or stale — you **must** read the link |
-| 🟠 `GAP` | Service not in the course at all — read before the exam |
-| 🔵 `EXTRA` | Adrian's lesson is fine — link is bonus depth |
+## Stack
 
-## Post-2021 gaps covered (not in Adrianx27s course)
-
-- IAM Identity Center (renamed from AWS SSO)
-- AWS Control Tower
-- AWS Network Firewall
-- Aurora Serverless v2 (completely different from v1)
-- RDS Proxy
-- AWS Backup
-- Amazon Macie v2
-- Amazon Detective
-- AWS Fault Injection Simulator
-- EventBridge Pipes
-- Lambda SnapStart
-- S3 Object Lambda
-- EC2 Image Builder
-- AWS App Runner
-- AWS Transfer Family
-- AWS Resilience Hub
-- OpenSearch Service (renamed from Elasticsearch)
-- CloudFront OAC (replaced OAI)
-- Inspector v2 (completely rewritten)
-- WAFv2 (replaced WAFv1)
-- MGN / DRS (replaced CloudEndure)
-- Cost Anomaly Detection
-- Savings Plans
-- ...and more
-
-## Usage
-
-1. Download `adrian_per_lesson_tracker.html`
-2. Open it in any browser
-3. Check off lessons as you go — progress saves in localStorage
-
----
-
-Built by [Rekt-Dev](https://github.com/Rekt-Dev) while studying for SAP-C02.
+Vanilla JS · localStorage · zero dependencies
