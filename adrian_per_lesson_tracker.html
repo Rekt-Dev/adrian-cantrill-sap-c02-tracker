@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adrian AWS Pro — Per Lesson Tracker</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;color:#1a1a18;padding:2rem}
+@media(prefers-color-scheme:dark){body{background:#1a1a18;color:#e8e6df}}
+.container{max-width:1100px;margin:0 auto}
+h1{font-size:20px;font-weight:500;margin-bottom:4px}
+.subtitle{font-size:13px;color:#888;margin-bottom:1.5rem}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:1.5rem}
+.metric{background:#fff;border-radius:8px;padding:10px 14px;border:0.5px solid #e0ddd5}
+@media(prefers-color-scheme:dark){.metric{background:#2c2c2a;border-color:#3a3a38}}
+.metric-label{font-size:11px;color:#888;margin-bottom:3px}
+.metric-val{font-size:20px;font-weight:500}
+.progress-wrap{margin-bottom:1.5rem}
+.progress-label{font-size:12px;color:#888;margin-bottom:5px;display:flex;justify-content:space-between}
+.progress-bg{background:#e0ddd5;border-radius:4px;height:7px}
+@media(prefers-color-scheme:dark){.progress-bg{background:#3a3a38}}
+.progress-bar{height:7px;border-radius:4px;background:#639922;transition:width .3s}
+.filter-bar{display:flex;gap:8px;margin-bottom:1.2rem;flex-wrap:wrap;align-items:center}
+.filter-label{font-size:12px;color:#888}
+.filter-btn{font-size:12px;padding:4px 12px;cursor:pointer;border-radius:20px;border:0.5px solid #ccc;background:#fff;color:#333}
+@media(prefers-color-scheme:dark){.filter-btn{background:#2c2c2a;color:#ccc;border-color:#555}}
+.filter-btn.active{background:#1a1a18;color:#fff;border-color:#1a1a18}
+@media(prefers-color-scheme:dark){.filter-btn.active{background:#e8e6df;color:#1a1a18}}
+table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border-radius:8px;overflow:hidden;border:0.5px solid #e0ddd5;margin-bottom:1rem}
+@media(prefers-color-scheme:dark){table{background:#2c2c2a;border-color:#3a3a38}}
+thead th{font-size:11px;font-weight:500;color:#888;text-align:left;padding:8px 10px;border-bottom:0.5px solid #e0ddd5}
+@media(prefers-color-scheme:dark){thead th{border-color:#3a3a38}}
+tbody tr{border-bottom:0.5px solid #e8e6e0}
+@media(prefers-color-scheme:dark){tbody tr{border-color:#3a3a38}}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#f9f9f7}
+@media(prefers-color-scheme:dark){tbody tr:hover{background:#333331}}
+tbody td{padding:9px 10px;vertical-align:top}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.watch{background:#EAF3DE;color:#3B6D11}
+.fast{background:#E8F0FD;color:#1A56B0}
+.skip{background:#F0F0EE;color:#666}
+.supplement{background:#FCEBEB;color:#A32D2D}
+.demo-skip{background:#FEF3CD;color:#856404}
+@media(prefers-color-scheme:dark){
+.watch{background:#27500A;color:#C0DD97}
+.fast{background:#0C3170;color:#93B8F5}
+.skip{background:#333;color:#aaa}
+.supplement{background:#791F1F;color:#F7C1C1}
+.demo-skip{background:#5c3d00;color:#FFD875}}
+.lesson-num{font-size:11px;color:#aaa;font-weight:400;margin-right:4px}
+.lesson-title{font-weight:500;font-size:13px}
+.note{font-size:12px;color:#888;margin-top:3px}
+.note a{color:#185FA5;text-decoration:none}
+.note a:hover{text-decoration:underline}
+.check-col{width:32px;text-align:center}
+.num-col{width:42px;text-align:center;color:#aaa;font-size:12px}
+.action-col{width:120px}
+input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:#639922}
+tr.done td{opacity:.4}
+tr.done .lesson-title{text-decoration:line-through}
+.legend{display:flex;gap:12px;margin-bottom:1rem;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:12px;color:#888}
+.tip{background:#fff8e6;border:0.5px solid #f0d080;border-radius:6px;padding:10px 14px;font-size:12px;color:#7a5c00;margin-bottom:1.5rem}
+@media(prefers-color-scheme:dark){.tip{background:#3a3000;border-color:#7a6000;color:#f0d080}}
+.lt{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px;vertical-align:middle;letter-spacing:.3px}
+a.lt{cursor:pointer;text-decoration:none;position:relative}
+a.lt:hover{filter:brightness(1.15)}
+a.lt .supp-tip{display:none;position:absolute;left:0;top:120%;z-index:999;width:300px;background:#1e1e1c;color:#e8e6df;border:0.5px solid #555;border-radius:8px;padding:10px 12px;font-size:12px;font-weight:400;line-height:1.5;white-space:normal;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.4)}
+a.lt:hover .supp-tip{display:block}
+.supp-tip-title{font-weight:600;font-size:12px;margin-bottom:4px;color:#fff}
+.supp-tip-note{color:#bbb;margin-bottom:6px}
+.supp-tip-links a{color:#7eb3f5;font-size:11px;margin-right:8px}
+.note-btn{font-size:10px;padding:1px 6px;border-radius:10px;border:0.5px solid #555;background:transparent;color:#888;cursor:pointer;margin-left:6px;vertical-align:middle;position:relative;display:none}
+tr:hover .note-btn{display:inline-block}
+.note-btn:hover{border-color:#f0c040;color:#f0c040}
+.note-btn.has-note{display:inline-block;border-color:#f0c040;color:#f0c040}
+.note-btn .note-tip{display:none;position:absolute;left:0;top:120%;z-index:999;width:260px;background:#2a2600;color:#ffe066;border:0.5px solid #f0c040;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:400;line-height:1.5;white-space:pre-wrap;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.5);font-style:italic}
+.note-btn.has-note:hover .note-tip{display:block}
+.note-input{width:100%;margin-top:5px;background:#2a2a28;border:0.5px solid #f0c040;border-radius:5px;color:#f0c040;font-size:12px;padding:5px 8px;font-family:inherit;resize:vertical;min-height:44px}
+.note-input:focus{outline:none;border-color:#ffe066}
+.lt-must{background:#FDDEDE;color:#991111}
+.lt-gap{background:#FEE8D0;color:#8B4000}
+.lt-extra{background:#DDE8FB;color:#1A4B9C}
+@media(prefers-color-scheme:dark){
+.lt-must{background:#6B1515;color:#FFB3B3}
+.lt-gap{background:#5c2d00;color:#FFD0A0}
+.lt-extra{background:#0C2E6B;color:#A8C4F5}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Adrian Cantrill AWS Pro — Per Lesson Tracker</h1>
+<p class="subtitle">Every lesson in order · what to do with each · tailored for 30yr IT / CKA+CKS background</p>
+
+<div class="tip">
+💡 <strong>Legend:</strong> 
+<strong>Watch</strong> = full attention, new AWS-specific content. 
+<strong>Fast (1.75x)</strong> = you know the concept, just need AWS flavour. 
+<strong>Skip</strong> = you 100% know this, nothing new. 
+<strong>Supplement</strong> = not covered well or post-2021 gap, go to external resource. 
+<strong>Demo-Skip</strong> = needs 2 accounts or specific setup you don't have yet.
+</div>
+
+<div class="summary">
+  <div class="metric"><div class="metric-label">Total lessons</div><div class="metric-val" id="t">0</div></div>
+  <div class="metric"><div class="metric-label">Watch</div><div class="metric-val" id="w" style="color:#3B6D11">0</div></div>
+  <div class="metric"><div class="metric-label">Fast</div><div class="metric-val" id="f" style="color:#1A56B0">0</div></div>
+  <div class="metric"><div class="metric-label">Skip</div><div class="metric-val" id="s" style="color:#666">0</div></div>
+  <div class="metric"><div class="metric-label">Supplement</div><div class="metric-val" id="sup" style="color:#A32D2D">0</div></div>
+  <div class="metric"><div class="metric-label">Demo-Skip</div><div class="metric-val" id="ds" style="color:#856404">0</div></div>
+  <div class="metric"><div class="metric-label">Done</div><div class="metric-val" id="done">0</div></div>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-label"><span>Progress</span><span id="pct">0%</span></div>
+  <div class="progress-bg"><div class="progress-bar" id="bar" style="width:0%"></div></div>
+</div>
+
+<div class="filter-bar">
+  <span class="filter-label">Filter:</span>
+  <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+  <button class="filter-btn" onclick="setFilter('watch',this)">Watch</button>
+  <button class="filter-btn" onclick="setFilter('fast',this)">Fast</button>
+  <button class="filter-btn" onclick="setFilter('skip',this)">Skip</button>
+  <button class="filter-btn" onclick="setFilter('supplement',this)">Supplement</button>
+  <button class="filter-btn" onclick="setFilter('demo-skip',this)">Demo-Skip</button>
+  <button class="filter-btn" onclick="setFilter('undone',this)">Not done yet</button>
+</div>
+
+<div id="tc"></div>
+
+<script>
+const lessons = [
+  {n:1,title:"Public Introduction",action:"skip",note:"Intro video"},
+  {n:2,title:"Site Tools and Features",action:"skip",note:"Platform navigation"},
+  {n:3,title:"Finding and Using the Course Resources",action:"skip",note:"How to use the course"},
+  {n:4,title:"AWS Exams",action:"watch",note:"Exam structure, question technique — worth knowing"},
+  {n:5,title:"Course Scenario",action:"skip",note:"Animals4life scenario intro"},
+  {n:6,title:"[OPTIONAL] Connect with other students",action:"skip",note:""},
+  {n:7,title:"[ASSOCIATESHARED] AWS Accounts",action:"fast",note:"Account structure basics — fast, AWS-specific details"},
+  {n:8,title:"[ASSOCIATESHARED][DEMO] Create the GENERAL AWS Account",action:"skip",note:"Already done"},
+  {n:9,title:"[ASSOCIATESHARED] Multi-factor Authentication (MFA)",action:"fast",note:"Know MFA, just watch AWS implementation"},
+  {n:10,title:"[ASSOCIATESHARED] [DEMO] Securing An AWS Account",action:"skip",note:"Already done"},
+  {n:11,title:"[ASSOCIATESHARED] [DEMO] Creating a Budget",action:"skip",note:"Already done"},
+  {n:12,title:"[ASSOCIATESHARED] [DOITYOURSELF] Creating the Production Account",action:"demo-skip",note:"Needs 2nd account — come back when brother verifies"},
+  {n:13,title:"[ASSOCIATESHARED] [DEMO] Adding an IAM Admin - GENERAL ACCOUNT",action:"skip",note:"Already done"},
+  {n:14,title:"[ASSOCIATESHARED] [DEMO] Adding an IAM Admin - PRODUCTION ACCOUNT",action:"demo-skip",note:"Needs 2nd account"},
+  {n:15,title:"[SHAREDASSOCIATE] IAM Access Keys",action:"fast",note:"Know access keys, just verify AWS-specific rotation/security practices"},
+  {n:16,title:"[ASSOCIATESHARED] [DEMO] Creating Access keys and setting up AWS CLI v2",action:"skip",note:"Already done on Linux"},
+  {n:17,title:"[ASSOCIATESHARED] AWS Organizations",action:"watch",note:"Critical exam topic — SCPs, OUs, account structure",link:"https://docs.aws.amazon.com/organizations/latest/userguide/orgs_introduction.html",linkText:"AWS Organizations docs",linkType:"extra"},
+  {n:18,title:"[ASSOCIATESHARED] [DEMO] AWS Organizations - PART1",action:"demo-skip",note:"Needs 2 accounts"},
+  {n:19,title:"[ASSOCIATESHARED] [DEMO] AWS Organizations - PART2",action:"demo-skip",note:"Needs 2 accounts"},
+  {n:20,title:"YAML101",action:"skip",note:"You write YAML for breakfast"},
+  {n:21,title:"JSON101",action:"skip",note:"Same"},
+  {n:22,title:"Network Starter Pack - 0 - INTRO",action:"skip",note:"30 years networking"},
+  {n:23,title:"Network Starter Pack - 1 - PHYSICAL",action:"skip",note:""},
+  {n:24,title:"Network Starter Pack - 2 - Data Link - Part 1",action:"skip",note:""},
+  {n:25,title:"Network Starter Pack - 2 - Data Link - Part 2",action:"skip",note:""},
+  {n:26,title:"Decimal to Binary Conversion (IP Addressing)",action:"skip",note:""},
+  {n:27,title:"Network Starter Pack - 3 - Network - Part 1",action:"skip",note:""},
+  {n:28,title:"Network Starter Pack - 3 - Network - Part 2",action:"skip",note:""},
+  {n:29,title:"Network Starter Pack - 3 - Network - Part 3",action:"skip",note:""},
+  {n:30,title:"Network Starter Pack - 4 - Transport - Part 1",action:"skip",note:""},
+  {n:31,title:"Network Starter Pack - 4 - Transport - Part 2",action:"skip",note:""},
+  {n:32,title:"Network Starter Pack - EXTRA - NAT - PART1",action:"skip",note:""},
+  {n:33,title:"Network Starter Pack - EXTRA - NAT - PART2",action:"skip",note:""},
+  {n:34,title:"Network Starter Pack - EXTRA - Subnetting - PART1",action:"skip",note:""},
+  {n:35,title:"Network Starter Pack - EXTRA - Subnetting - PART2",action:"skip",note:""},
+  {n:36,title:"Distributed Denial of Service (DDoS) attack",action:"fast",note:"Know DDoS — just watch AWS Shield/WAF context"},
+  {n:37,title:"Secure Sockets Layer (SSL) and Transport Layer Security (TLS)",action:"fast",note:"Know SSL/TLS — watch ACM integration context"},
+  {n:38,title:"[UPDATE202109] VLANS, Trunks and Q-in-Q",action:"fast",note:"Know VLANs — AWS Direct Connect context"},
+  {n:39,title:"[UPDATE202109] Jumbo Frames and MTU",action:"fast",note:"Know MTU — AWS Enhanced Networking context"},
+  {n:40,title:"Encryption 101 - PART1",action:"fast",note:"Know encryption — watch KMS/envelope encryption framing"},
+  {n:41,title:"Encryption 101 - PART2",action:"fast",note:""},
+  {n:42,title:"Security Token Service (STS)",action:"watch",note:"Critical — AssumeRole, temp credentials, cross-account. Exam staple.",link:"https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html",linkText:"STS docs",linkType:"extra"},
+  {n:43,title:"Revoking IAM Role Temporary Security Credentials",action:"watch",note:"AWSRevokeOlderSessions pattern — tested on Pro exam"},
+  {n:44,title:"[DEMO] Revoking Temporary Credentials - PART1",action:"watch",note:"Do the demo"},
+  {n:45,title:"[DEMO] Revoking Temporary Credentials - PART2",action:"watch",note:""},
+  {n:46,title:"Policy Interpretation Deep Dive - Example 1",action:"watch",note:"Critical — IAM evaluation logic is heavily tested"},
+  {n:47,title:"Policy Interpretation Deep Dive - Example 2",action:"watch",note:""},
+  {n:48,title:"Policy Interpretation Deep Dive - Example 3",action:"watch",note:""},
+  {n:49,title:"Permissions Boundaries and Use-cases",action:"watch",note:"Pro exam loves permissions boundaries",link:"https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html",linkText:"Permissions Boundaries docs",linkType:"extra"},
+  {n:50,title:"AWS Permissions Evaluation",action:"watch",note:"The full evaluation logic — mandatory"},
+  {n:51,title:"[DEMO] Cross Account Access to S3 - SETUP",action:"watch",note:"Cross-account patterns are exam staples"},
+  {n:52,title:"[DEMO] Cross Account Access to S3 - PART1",action:"watch",note:""},
+  {n:53,title:"[DEMO] Cross Account Access to S3 - PART2",action:"watch",note:""},
+  {n:54,title:"AWS Resource Access Manager (RAM)",action:"watch",note:"RAM is tested — sharing across accounts/orgs",link:"https://docs.aws.amazon.com/ram/latest/userguide/what-is.html",linkText:"RAM docs",linkType:"extra"},
+  {n:55,title:"[DEMO] Shared ORG VPC - PART1",action:"demo-skip",note:"Needs 2 accounts"},
+  {n:56,title:"[DEMO] Shared ORG VPC - PART2",action:"demo-skip",note:"Needs 2 accounts"},
+  {n:57,title:"Service Quotas",action:"fast",note:"Know limits concept — watch AWS-specific quota request process"},
+  {n:58,title:"SAML2.0 Identity Federation",action:"watch",note:"Federation is heavily tested on Pro — watch carefully",link:"https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_saml.html",linkText:"SAML Federation docs",linkType:"extra"},
+  {n:59,title:"AWS Single Sign-on (SSO) / IAM Identity Center",action:"watch",note:"Critical — renamed to IAM Identity Center post-2021, Adrian uses old SSO name",link:"https://docs.aws.amazon.com/singlesignon/latest/userguide/what-is.html",linkText:"IAM Identity Center docs",linkType:"must",link2:"https://www.youtube.com/results?search_query=AWS+IAM+Identity+Center+SAP-C02",link2Text:"YouTube",link2Type:"must"},
+  {n:60,title:"[DEMO] Adding SSO - PART1",action:"demo-skip",note:"Needs 2 accounts"},
+  {n:61,title:"[DEMO] Adding SSO - PART2",action:"demo-skip",note:"Needs 2 accounts"},
+  {n:62,title:"[UPDATE202104] Amazon Cognito - User and Identity Pools",action:"watch",note:"Web identity federation pattern — tested",link:"https://docs.aws.amazon.com/cognito/latest/developerguide/what-is-amazon-cognito.html",linkText:"Cognito docs",linkType:"extra"},
+  {n:63,title:"[AdvancedDemo] Using Web Identity Federation - PART1",action:"watch",note:""},
+  {n:64,title:"[AdvancedDemo] Using Web Identity Federation - PART2",action:"watch",note:""},
+  {n:65,title:"[AdvancedDemo] Using Web Identity Federation - PART3",action:"watch",note:""},
+  {n:66,title:"[AdvancedDemo] Using Web Identity Federation - PART4",action:"watch",note:""},
+  {n:67,title:"[AdvancedDemo] Using Web Identity Federation - PART5",action:"watch",note:""},
+  {n:68,title:"Amazon Workspaces",action:"watch",note:"VDI solution — know vs AppStream 2.0"},
+  {n:69,title:"[DEMO] Workspaces with Directory Service - PART1",action:"watch",note:""},
+  {n:70,title:"[DEMO] Workspaces with Directory Service - PART2",action:"watch",note:""},
+  {n:71,title:"Directory Service Deep Dive (Microsoft AD)",action:"watch",note:"Hybrid AD is exam staple — watch carefully"},
+  {n:72,title:"Directory Service Deep Dive (AD Connector)",action:"watch",note:""},
+  {n:73,title:"[DEMO] Implementing hybrid directory - PART1",action:"watch",note:"NOTE: marked as broken in course — watch only"},
+  {n:74,title:"[DEMO] Implementing hybrid directory - PART2",action:"watch",note:""},
+  {n:75,title:"[DEMO] Implementing hybrid directory - PART3",action:"watch",note:""},
+  {n:76,title:"[DEMO] Implementing hybrid directory - PART4",action:"watch",note:""},
+  {n:77,title:"[DEMO] Implementing hybrid directory - PART5",action:"watch",note:""},
+  {n:78,title:"[DEMO] Implementing hybrid directory - PART6",action:"watch",note:""},
+  {n:79,title:"[DEMO] Implementing hybrid directory - PART7",action:"watch",note:""},
+  {n:80,title:"[ASSOCIATESHARED] Private and Public AWS Services",action:"fast",note:"AWS networking zones — quick watch"},
+  {n:81,title:"DHCP In a VPC",action:"fast",note:"Know DHCP — AWS VPC specific options"},
+  {n:82,title:"VPC Router Deep Dive",action:"watch",note:"VPC routing is Pro exam heavy — watch fully",link:"https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Route_Tables.html",linkText:"VPC Route Tables docs",linkType:"extra"},
+  {n:83,title:"Stateful vs Stateless Firewalls",action:"fast",note:"Know concept — NACLs vs SGs in AWS context"},
+  {n:84,title:"Network Access Control Lists (NACL)",action:"watch",note:"NACLs tested heavily — stateless, ephemeral ports"},
+  {n:85,title:"Security Groups",action:"watch",note:"SG rules, self-reference, cross-SG rules — exam scenarios"},
+  {n:86,title:"Border Gateway Protocol 101",action:"fast",note:"Know BGP — AWS DX/VPN context"},
+  {n:87,title:"[Refresher] AWS Global Accelerator",action:"watch",note:"vs CloudFront is a common exam scenario",link:"https://docs.aws.amazon.com/global-accelerator/latest/dg/what-is-global-accelerator.html",linkText:"Global Accelerator docs",linkType:"extra"},
+  {n:88,title:"Site2SiteVPN Refresher",action:"watch",note:"VPN + DX failover patterns — Pro exam staple"},
+  {n:89,title:"Transit Gateway Refresher",action:"watch",note:"TGW is critical for Pro",link:"https://docs.aws.amazon.com/vpc/latest/tgw/what-is-transit-gateway.html",linkText:"TGW docs",linkType:"extra"},
+  {n:90,title:"Transit Gateway Deep Dive",action:"watch",note:"Multi-region TGW peering — supplement with AWS docs after",link:"https://docs.aws.amazon.com/vpc/latest/tgw/tgw-peering.html",linkText:"TGW Peering docs",linkType:"must"},
+  {n:91,title:"Advanced VPC Routing - PART1",action:"watch",note:"Advanced routing is Pro exam territory"},
+  {n:92,title:"Advanced VPC Routing - PART2",action:"watch",note:""},
+  {n:93,title:"IP Sec VPN Fundamentals",action:"fast",note:"Know IPSec — AWS VPN context"},
+  {n:94,title:"Accelerated Site-to-Site VPN",action:"watch",note:""},
+  {n:95,title:"[NEW][AdvancedDEMO] Advanced Site-to-Site VPN - STAGE1",action:"watch",note:"Do the demo"},
+  {n:96,title:"[NEW][AdvancedDEMO] Advanced Site-to-Site VPN - STAGE2 - PART1",action:"watch",note:""},
+  {n:97,title:"[NEW][AdvancedDEMO] Advanced Site-to-Site VPN - STAGE2 - PART2",action:"watch",note:""},
+  {n:98,title:"[NEW][AdvancedDEMO] Advanced Site-to-Site VPN - STAGE3 - PART1",action:"watch",note:""},
+  {n:99,title:"[NEW][AdvancedDEMO] Advanced Site-to-Site VPN - STAGE3 - PART2",action:"watch",note:""},
+  {n:100,title:"[NEW][AdvancedDEMO] Advanced Site-to-Site VPN - STAGE4",action:"watch",note:""},
+  {n:101,title:"[NEW][AdvancedDEMO] Advanced Site-to-Site VPN - STAGE5",action:"watch",note:""},
+  {n:102,title:"[202109UPDATE] AWS Client VPN",action:"watch",note:""},
+  {n:103,title:"[DEMO] Client VPN - PART0 - SETUP",action:"watch",note:""},
+  {n:104,title:"[DEMO] Client VPN - PART1 - Directory",action:"watch",note:""},
+  {n:105,title:"[DEMO] Client VPN - PART2 - Certificates",action:"watch",note:""},
+  {n:106,title:"[DEMO] Client VPN - PART3 - Create Endpoint",action:"watch",note:""},
+  {n:107,title:"[DEMO] Client VPN - PART4 - Configure Endpoint",action:"watch",note:""},
+  {n:108,title:"[DEMO] Client VPN - PART5 - Install and test",action:"watch",note:""},
+  {n:109,title:"[DEMO] Client VPN - PART6 - Cleanup",action:"watch",note:""},
+  {n:110,title:"[UPDATE202109] AWS Direct Connect (DX) Concepts",action:"watch",note:"DX is heavily tested on Pro — 8 videos, watch all",link:"https://docs.aws.amazon.com/directconnect/latest/UserGuide/Welcome.html",linkText:"Direct Connect docs",linkType:"extra"},
+  {n:111,title:"[UPDATE202109] DX Physical Connection Architecture",action:"watch",note:""},
+  {n:112,title:"[UPDATE202109] Direct Connect Security (MACSec)",action:"watch",note:""},
+  {n:113,title:"[UPDATE202109] DX Connection Process",action:"watch",note:""},
+  {n:114,title:"[UPDATE202109] BGP Session + VLAN",action:"watch",note:""},
+  {n:115,title:"[UPDATE202109] Private VIFs",action:"watch",note:""},
+  {n:116,title:"[UPDATE202109] Public VIFs",action:"watch",note:""},
+  {n:117,title:"[UPDATE202109] Public VIF + VPN (Encryption)",action:"watch",note:""},
+  {n:118,title:"[UPDATE202109] Direct Connect (DX) Gateway",action:"watch",note:""},
+  {n:119,title:"[UPDATE202109] Direct Connect, Transit VIFs and TGW",action:"watch",note:""},
+  {n:120,title:"[UPDATE202109] Direct Connect Resilience",action:"watch",note:"Resilience patterns — Pro exam staple",link:"https://docs.aws.amazon.com/directconnect/latest/UserGuide/resilency_toolkit.html",linkText:"DX Resiliency Toolkit",linkType:"extra"},
+  {n:121,title:"[UPDATE202109] DX LAGs",action:"watch",note:""},
+  {n:122,title:"[ASSOCIATESHARED] DNS Fundamentals - PART1",action:"skip",note:"Know DNS"},
+  {n:123,title:"[ASSOCIATESHARED] DNS Fundamentals - PART2",action:"skip",note:""},
+  {n:124,title:"[ASSOCIATESHARED] Route53 Fundamentals",action:"fast",note:"Know DNS — watch R53-specific features"},
+  {n:125,title:"[ASSOCIATESHARED] DNS Record Types",action:"fast",note:""},
+  {n:126,title:"[ASSOCIATESHARED] R53 Public Hosted Zones",action:"fast",note:""},
+  {n:127,title:"[ASSOCIATESHARED] R53 Private Hosted Zones",action:"watch",note:"Private zones + split-horizon is tested"},
+  {n:128,title:"[ASSOCIATESHARED] CNAME vs R53 Alias",action:"watch",note:"Alias vs CNAME exam trick"},
+  {n:129,title:"[ASSOCIATESHARED] Simple Routing",action:"fast",note:""},
+  {n:130,title:"[ASSOCIATESHARED] R53 Health Checks",action:"watch",note:"Health checks + routing policies combo — tested"},
+  {n:131,title:"[ASSOCIATESHARED] Failover Routing",action:"watch",note:""},
+  {n:132,title:"[DEMO] R53 Failover Routing - PART1",action:"watch",note:""},
+  {n:133,title:"[DEMO] R53 Failover Routing - PART2",action:"watch",note:""},
+  {n:134,title:"[ASSOCIATESHARED] Multi Value Routing",action:"watch",note:""},
+  {n:135,title:"[ASSOCIATESHARED] Weighted Routing",action:"watch",note:""},
+  {n:136,title:"[ASSOCIATESHARED] Latency Routing",action:"watch",note:""},
+  {n:137,title:"[ASSOCIATESHARED] Geolocation Routing",action:"watch",note:"Geo vs Geoproximity is a classic exam trap"},
+  {n:138,title:"[ASSOCIATESHARED] Geoproximity Routing",action:"watch",note:""},
+  {n:139,title:"[ASSOCIATESHARED] R53 Interoperability",action:"watch",note:"Hybrid DNS — tested on Pro"},
+  {n:140,title:"AWS Private Link",action:"watch",note:"PrivateLink vs VPC peering vs endpoints — Pro exam staple",link:"https://docs.aws.amazon.com/vpc/latest/privatelink/what-is-privatelink.html",linkText:"PrivateLink docs",linkType:"extra"},
+  {n:141,title:"[ASSOCIATESHARED] Gateway Endpoint Refresher",action:"watch",note:"S3/DynamoDB endpoints — know the difference"},
+  {n:142,title:"[ASSOCIATESHARED] Interface Endpoint Refresher",action:"watch",note:""},
+  {n:143,title:"VPC Endpoint Policies and Bucket Policies",action:"watch",note:"Endpoint + bucket policy combo — tested"},
+  {n:144,title:"[DEMO] Private S3 Buckets - PART1",action:"watch",note:""},
+  {n:145,title:"[DEMO] Private S3 Buckets - PART2",action:"watch",note:""},
+  {n:146,title:"Advanced VPC DNS and DNS Endpoints",action:"watch",note:"Route53 Resolver — hybrid DNS critical topic",link:"https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver.html",linkText:"Route53 Resolver docs",linkType:"extra"},
+  {n:147,title:"[DEMO] Hybrid DNS - PART1",action:"watch",note:""},
+  {n:148,title:"[DEMO] Hybrid DNS - PART2",action:"watch",note:""},
+  {n:149,title:"[DEMO] Hybrid DNS - PART3",action:"watch",note:""},
+  {n:150,title:"[DEMO] Hybrid DNS - PART4",action:"watch",note:""},
+  {n:151,title:"IPv6 Capability in VPCs - PART1",action:"watch",note:"IPv6 in AWS — increasingly tested"},
+  {n:152,title:"IPv6 Capability in VPCs - PART2",action:"watch",note:""},
+  {n:153,title:"Advanced VPC Structure - How Many AZs",action:"watch",note:"HA design patterns"},
+  {n:154,title:"Advanced VPC Structure - Subnets and Tiers - PART1",action:"watch",note:"Multi-tier VPC design — Pro exam scenario"},
+  {n:155,title:"Advanced VPC Structure - Subnets and Tiers - PART2",action:"watch",note:""},
+  {n:156,title:"[ASSOCIATESHARED] FSx for Windows File Server",action:"watch",note:"FSx vs EFS vs S3 — know when to use"},
+  {n:157,title:"[ASSOCIATESHARED] FSx for Lustre",action:"watch",note:"HPC workloads"},
+  {n:158,title:"[ASSOCIATESHARED] EFS Refresher",action:"watch",note:""},
+  {n:159,title:"[DEMO] Implementing EFS - PART1",action:"watch",note:""},
+  {n:160,title:"[DEMO] Implementing EFS - PART2",action:"watch",note:""},
+  {n:161,title:"[ASSOCIATESHARED] S3 Object Storage Classes - PART1",action:"watch",note:"Storage class selection is Pro exam scenario"},
+  {n:162,title:"[ASSOCIATESHARED] S3 Object Storage Classes - PART2",action:"watch",note:""},
+  {n:163,title:"[ASSOCIATESHARED] S3 Lifecycle Configuration",action:"watch",note:""},
+  {n:164,title:"[ASSOCIATESHARED] S3 Replication",action:"watch",note:"CRR vs SRR — know the differences"},
+  {n:165,title:"[ASSOCIATESHARED] S3 Object Encryption - PART1",action:"watch",note:"SSE-S3 vs SSE-KMS vs SSE-C — tested"},
+  {n:166,title:"[ASSOCIATESHARED] S3 Object Encryption - PART2",action:"watch",note:""},
+  {n:167,title:"[ASSOCIATESHARED] S3 Presigned URLs",action:"watch",note:""},
+  {n:168,title:"[ASSOCIATESHARED] S3 Select and Glacier Select",action:"fast",note:""},
+  {n:169,title:"[ASSOCIATESHARED] Cross-Origin Resource Sharing (CORS)",action:"fast",note:""},
+  {n:170,title:"[ASSOCIATESHARED] S3 Events",action:"watch",note:"Event-driven patterns with S3"},
+  {n:171,title:"[ASSOCIATESHARED] S3 Access Logs",action:"fast",note:""},
+  {n:172,title:"S3 Object Lock",action:"watch",note:"WORM compliance — tested"},
+  {n:173,title:"S3 Access Points",action:"watch",note:"Multi-tenant S3 access — Pro topic",link:"https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-points.html",linkText:"S3 Access Points docs",linkType:"extra"},
+  {n:174,title:"[DEMO] Multi-Region Access Points - PART1",action:"watch",note:"Post-2021 feature — important",link:"https://docs.aws.amazon.com/AmazonS3/latest/userguide/MultiRegionAccessPoints.html",linkText:"Multi-Region Access Points docs",linkType:"must"},
+  {n:175,title:"[DEMO] Multi-Region Access Points - PART2",action:"watch",note:""},
+  {n:176,title:"[DEMO] Multi-Region Access Points - PART3",action:"watch",note:""},
+  {n:177,title:"S3 Inventory",action:"fast",note:""},
+  {n:178,title:"[ASSOCIATESHARED] EC2 Architecture and Resilience",action:"fast",note:"Know EC2 — watch AZ resilience patterns"},
+  {n:179,title:"[ASSOCIATESHARED] EC2 Instance Types",action:"fast",note:"Know types — watch when exam picks which family"},
+  {n:180,title:"[ASSOCIATESHARED] EC2 SSH vs EC2 Instance Connect",action:"skip",note:""},
+  {n:181,title:"[ASSOCIATESHARED] Storage Refresher",action:"fast",note:""},
+  {n:182,title:"[ASSOCIATESHARED] EBS Volume Types - GP2",action:"fast",note:"Know storage — watch GP2 vs GP3 difference"},
+  {n:183,title:"[ASSOCIATESHARED] EBS Volume Types - GP3",action:"watch",note:"GP3 replaces GP2 — post-2021, Adrian's GP2 content is outdated",link:"https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html",linkText:"EBS Volume Types docs",linkType:"must"},
+  {n:184,title:"[ASSOCIATESHARED] EBS Volume Types - IO",action:"watch",note:"IO1/IO2 for high IOPS — when to use"},
+  {n:185,title:"[ASSOCIATESHARED] EBS Volume Types - HDD",action:"fast",note:""},
+  {n:186,title:"[ASSOCIATESHARED] EC2 Instance Store",action:"watch",note:"Ephemeral storage trade-offs — tested"},
+  {n:187,title:"[ASSOCIATESHARED] Choosing Between Storage Types",action:"watch",note:"Decision framework — Pro exam scenario"},
+  {n:188,title:"[ASSOCIATESHARED] Snapshots, Restore and FSR",action:"watch",note:""},
+  {n:189,title:"[ASSOCIATESHARED] EBS Encryption",action:"watch",note:"KMS + EBS encryption patterns"},
+  {n:190,title:"[ASSOCIATESHARED] Network Interfaces, Instance IPs and DNS",action:"watch",note:"ENI, EIP, secondary IPs — Pro scenarios"},
+  {n:191,title:"[ASSOCIATESHARED] Amazon Machine Images (AMI)",action:"watch",note:"Cross-region/cross-account AMI sharing — tested"},
+  {n:192,title:"[ASSOCIATESHARED] EC2 Purchase Options - PART1",action:"watch",note:"On-demand vs Reserved vs Spot — cost optimization exam topic"},
+  {n:193,title:"[ASSOCIATESHARED] EC2 Purchase Options - PART2",action:"watch",note:""},
+  {n:194,title:"[ASSOCIATESHARED] Reserved Instances - the rest",action:"watch",note:"RI types, convertible, scheduled — tested"},
+  {n:195,title:"[ASSOCIATESHARED] Instance Status Checks and Auto Recovery",action:"watch",note:""},
+  {n:196,title:"[ASSOCIATESHARED] Horizontal and Vertical Scaling",action:"fast",note:"Know scaling — AWS ASG context"},
+  {n:197,title:"[ASSOCIATESHARED] Instance Metadata",action:"watch",title2:"IMDSv2 security — tested"},
+  {n:198,title:"[ASSOCIATESHARED] Bootstrapping EC2 using User Data",action:"watch",note:"cfn-init vs user data — CloudFormation context"},
+  {n:199,title:"EC2 - Placement Groups",action:"watch",note:"Cluster vs Spread vs Partition — Pro exam scenarios"},
+  {n:200,title:"Enhanced Networking and EFA",action:"watch",note:"HPC networking — know when exam picks EFA"},
+  {n:201,title:"[ASSOCIATESHARED] Load Balancing Fundamentals",action:"fast",note:"Know LB — watch AWS-specific cross-zone LB"},
+  {n:202,title:"[ASSOCIATESHARED] Application Load Balancer (ALB)",action:"watch",note:"ALB rules, target groups, HTTPS offload — tested"},
+  {n:203,title:"[ASSOCIATESHARED] Launch Configuration and Templates",action:"watch",note:"LT vs LC — know the difference"},
+  {n:204,title:"[ASSOCIATESHARED] Auto Scaling Groups",action:"watch",note:"ASG lifecycle hooks, warm pools — Pro topic"},
+  {n:205,title:"[ASSOCIATESHARED] Auto Scaling Groups - Scaling Policies",action:"watch",note:"Target tracking vs step scaling — tested"},
+  {n:206,title:"[ASSOCIATESHARED] Network Load Balancer (NLB)",action:"watch",note:"NLB vs ALB decision — exam staple"},
+  {n:207,title:"[ASSOCIATESHARED] SSL Offload and Session Stickiness",action:"watch",note:""},
+  {n:208,title:"Gateway Load Balancer",action:"watch",note:"GWLB for inline security appliances — Pro topic",link:"https://docs.aws.amazon.com/elasticloadbalancing/latest/gateway/introduction.html",linkText:"GWLB docs",linkType:"extra"},
+  {n:209,title:"[ASSOCIATESHARED] RDS Architecture",action:"watch",note:""},
+  {n:210,title:"[ASSOCIATESHARED] RDS High-Availability (Multi-AZ)",action:"watch",note:"Multi-AZ vs Read Replica — exam trap"},
+  {n:211,title:"[ASSOCIATESHARED] RDS Backup, Snapshots and Restore",action:"watch",note:"RPO/RTO patterns"},
+  {n:212,title:"[ASSOCIATESHARED] RDS Read-Replicas",action:"watch",note:""},
+  {n:213,title:"[ASSOCIATESHARED] RDS Data Security",action:"watch",note:"Encryption at rest/transit, IAM auth"},
+  {n:214,title:"[ASSOCIATESHARED] Aurora Architecture",action:"watch",note:"Aurora is heavily tested — shared storage, endpoints",link:"https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/CHAP_AuroraOverview.html",linkText:"Aurora docs",linkType:"extra"},
+  {n:215,title:"[ASSOCIATESHARED] Aurora Serverless",action:"watch",note:"v1 vs v2 — know the difference"},
+  {n:216,title:"[ASSOCIATESHARED] Aurora Global Database",action:"watch",note:"Multi-region Aurora — DR pattern"},
+  {n:217,title:"[ASSOCIATESHARED] Aurora Multi-Master",action:"watch",note:""},
+  {n:218,title:"[ASSOCIATESHARED] Database Migration Service (DMS)",action:"watch",note:"Homogeneous vs heterogeneous, SCT, CDC",link:"https://docs.aws.amazon.com/dms/latest/userguide/Welcome.html",linkText:"DMS docs",linkType:"extra"},
+  {n:219,title:"[ASSOCIATESHARED] DynamoDB Architecture",action:"watch",note:""},
+  {n:220,title:"[ASSOCIATESHARED] DynamoDB Operations - PART1",action:"watch",note:"Partition key design, RCU/WCU — tested"},
+  {n:221,title:"[ASSOCIATESHARED] DynamoDB Operations - PART2",action:"watch",note:""},
+  {n:222,title:"[ASSOCIATESHARED] DynamoDB Local and Global Secondary Indexes",action:"watch",note:"LSI vs GSI — exam trap"},
+  {n:223,title:"[ASSOCIATESHARED] DynamoDB Streams and Lambda Triggers",action:"watch",note:"Event-driven patterns"},
+  {n:224,title:"[ASSOCIATESHARED] DynamoDB Global Tables",action:"watch",note:"Multi-region active-active — DR pattern"},
+  {n:225,title:"[ASSOCIATESHARED] DynamoDB Accelerator (DAX)",action:"watch",note:"vs ElastiCache — know when to pick",link:"https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DAX.html",linkText:"DAX docs",linkType:"extra"},
+  {n:226,title:"[ASSOCIATESHARED] DynamoDB TTL",action:"fast",note:""},
+  {n:227,title:"Amazon Athena",action:"watch",note:"Serverless SQL on S3 — tested"},
+  {n:228,title:"Amazon Athena - DEMO",action:"watch",note:""},
+  {n:229,title:"Neptune",action:"fast",note:"Graph DB — know when exam picks it"},
+  {n:230,title:"Quantum Ledger Database (QLDB)",action:"fast",note:""},
+  {n:231,title:"Amazon Timestream",action:"fast",note:"Time-series DB"},
+  {n:232,title:"MapReduce 101",action:"fast",note:"Know MapReduce — EMR context"},
+  {n:233,title:"EMR Architecture",action:"watch",note:"EMR for big data — when vs Glue vs Athena"},
+  {n:234,title:"Redshift Architecture",action:"watch",note:"Data warehouse — tested"},
+  {n:235,title:"Redshift Resilience and Recovery",action:"watch",note:""},
+  {n:236,title:"AWS Batch",action:"watch",note:"Batch vs Lambda vs ECS — exam decision"},
+  {n:237,title:"AWS QuickSight",action:"fast",note:"BI tool — know when exam picks it"},
+  {n:238,title:"[ASSOCIATESHARED] Introduction to containers",action:"fast",note:"You know containers"},
+  {n:239,title:"[DEMO] Creating Docker Image",action:"skip",note:"You know Docker"},
+  {n:240,title:"[ASSOCIATESHARED] ECS - Concepts",action:"watch",note:"ECS vs EKS decision — your CKA helps here",link:"https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html",linkText:"ECS docs",linkType:"extra"},
+  {n:241,title:"[ASSOCIATESHARED] ECS - Cluster Types",action:"watch",note:"EC2 vs Fargate launch types"},
+  {n:242,title:"[DEMO] Deploying using Fargate",action:"watch",note:""},
+  {n:243,title:"[Refresher] Simple Notification Service (SNS)",action:"watch",note:"Fan-out patterns — tested"},
+  {n:244,title:"[Refresher] Simple Queue Service (SQS)",action:"watch",note:"Decoupling patterns — Pro exam staple"},
+  {n:245,title:"[UPDATE202104] SQS Standard vs FIFO Queues",action:"watch",note:"Know when exam picks FIFO"},
+  {n:246,title:"[UPDATE202104] SQS Extended Client Library",action:"fast",note:"Large messages via S3"},
+  {n:247,title:"[UPDATE202104] SQS Delay Queues",action:"watch",note:""},
+  {n:248,title:"[UPDATE202104] SQS Dead-Letter Queues",action:"watch",note:"DLQ patterns — tested"},
+  {n:249,title:"Amazon MQ",action:"watch",note:"vs SQS/SNS — migration scenario exam trap"},
+  {n:250,title:"AWS Lambda In-depth - PART1",action:"watch",note:"Lambda internals — Pro exam goes deep"},
+  {n:251,title:"AWS Lambda In-depth - PART2",action:"watch",note:""},
+  {n:252,title:"AWS Lambda In-depth - PART3",action:"watch",note:""},
+  {n:253,title:"Lambda Handler Architecture - PART1",action:"watch",note:""},
+  {n:254,title:"Lambda Handler Architecture - PART2",action:"watch",note:""},
+  {n:255,title:"Lambda Versions",action:"watch",note:""},
+  {n:256,title:"Lambda Aliases",action:"watch",note:"Blue/green with aliases — deployment pattern"},
+  {n:257,title:"[DEMO] Aliases and Versions",action:"watch",note:""},
+  {n:258,title:"Lambda Environment Variables",action:"watch",note:""},
+  {n:259,title:"[DEMO] Accessing Private VPC Resources using Lambda - PART1",action:"watch",note:"Lambda in VPC — tested"},
+  {n:260,title:"[DEMO] Accessing Private VPC Resources using Lambda - PART2",action:"watch",note:""},
+  {n:261,title:"Lambda Layers",action:"watch",note:""},
+  {n:262,title:"Lambda Container Images",action:"watch",note:""},
+  {n:263,title:"Lambda and ALB Integration",action:"watch",note:""},
+  {n:264,title:"[Refresher] CloudWatchEvents and EventBridge",action:"watch",note:"EventBridge rules — event-driven architecture"},
+  {n:265,title:"Advanced API Gateway",action:"watch",note:"API GW types — REST vs HTTP vs WebSocket",link:"https://docs.aws.amazon.com/apigateway/latest/developerguide/welcome.html",linkText:"API Gateway docs",linkType:"extra"},
+  {n:266,title:"API Gateway - Methods and Resources",action:"watch",note:""},
+  {n:267,title:"API Gateway - DEMO Methods and Resources",action:"watch",note:""},
+  {n:268,title:"API Gateway - Integrations",action:"watch",note:""},
+  {n:269,title:"API Gateway Stages and Deployments",action:"watch",note:""},
+  {n:270,title:"Open API and Swagger",action:"fast",note:""},
+  {n:271,title:"[Refresher] AWS Step Functions",action:"watch",note:"Orchestration vs choreography — tested",link:"https://docs.aws.amazon.com/step-functions/latest/dg/welcome.html",linkText:"Step Functions docs",linkType:"extra"},
+  {n:272,title:"Simple Workflow Service (SWF)",action:"fast",note:"Legacy — know when exam still picks it"},
+  {n:273,title:"Amazon Mechanical Turk",action:"skip",note:"Not on Pro exam"},
+  {n:274,title:"Elastic Transcoder and MediaConvert",action:"fast",note:"Media processing — know which is current"},
+  {n:275,title:"AWS IOT",action:"fast",note:"Know at high level"},
+  {n:276,title:"AWS Greengrass",action:"fast",note:"Edge IoT — know when exam picks it"},
+  {n:277,title:"SAM - Serverless Application Model",action:"watch",note:"IaC for serverless — tested",link:"https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html",linkText:"SAM docs",linkType:"extra"},
+  {n:278,title:"[DEMO] SAM CLI",action:"watch",note:""},
+  {n:279,title:"[AdvancedDemo] Serverless App - PART1",action:"watch",note:"Full serverless build — do this demo"},
+  {n:280,title:"[AdvancedDemo] Serverless App - PART2",action:"watch",note:""},
+  {n:281,title:"[AdvancedDemo] Serverless App - PART3",action:"watch",note:""},
+  {n:282,title:"[AdvancedDemo] Serverless App - PART4",action:"watch",note:""},
+  {n:283,title:"[AdvancedDemo] Serverless App - PART5",action:"watch",note:""},
+  {n:284,title:"[AdvancedDemo] Serverless App - PART6",action:"watch",note:""},
+  {n:285,title:"[ASSOCIATESHARED] CloudFront Architecture - Refresher",action:"watch",note:"CDN patterns — tested"},
+  {n:286,title:"[ASSOCIATESHARED] CloudFront Behaviours",action:"watch",note:"Cache behaviors, path patterns"},
+  {n:287,title:"[ASSOCIATESHARED] TTL and Invalidations",action:"watch",note:""},
+  {n:288,title:"[ASSOCIATESHARED] CloudFront SSL and SNI",action:"watch",note:"SNI vs dedicated IP cert — exam trap"},
+  {n:289,title:"[ASSOCIATESHARED] Origin Types and Origin Architecture",action:"watch",note:""},
+  {n:290,title:"[NEW] Caching Performance and Optimisation",action:"watch",note:""},
+  {n:291,title:"[DEMO] Adding CDN to S3 Website - Part 1",action:"watch",note:""},
+  {n:292,title:"[DEMO] Adding CDN to S3 Website - Part 2",action:"watch",note:""},
+  {n:293,title:"[DEMO] Adding Alternate CNAME and SSL to CloudFront",action:"watch",note:""},
+  {n:294,title:"[ASSOCIATESHARED] CloudFront Security - OAI and Custom Origins",action:"watch",note:"OAI vs OAC — OAI is legacy, OAC is current post-2022",link:"https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html",linkText:"OAC docs (replaces OAI)",linkType:"must"},
+  {n:295,title:"[DEMO] Using Origin Access Identity (OAI)",action:"watch",note:""},
+  {n:296,title:"CloudFront Security - Private Distributions",action:"watch",note:"Signed URLs vs signed cookies — tested"},
+  {n:297,title:"CloudFront Geo Restriction",action:"watch",note:""},
+  {n:298,title:"CloudFront Security - Field-Level Encryption",action:"watch",note:""},
+  {n:299,title:"CloudFront - Lambda@Edge",action:"watch",note:"Lambda@Edge vs CloudFront Functions — tested",link:"https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-at-the-edge.html",linkText:"Lambda@Edge docs",linkType:"extra",link2:"https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/cloudfront-functions.html",link2Text:"CloudFront Functions docs",link2Type:"must"},
+  {n:300,title:"[NEW] Elasticache",action:"watch",note:"Redis vs Memcached — exam decision, DAX vs ElastiCache",link:"https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/WhatIs.html",linkText:"ElastiCache docs",linkType:"extra"},
+  {n:301,title:"The 6Rs of Cloud Migration",action:"watch",note:"Core migration framework — Pro exam heavily tests this",link:"https://docs.aws.amazon.com/prescriptive-guidance/latest/large-migration-guide/migration-strategies.html",linkText:"AWS 6Rs guide",linkType:"extra"},
+  {n:302,title:"Virtual Machine Migrations",action:"watch",note:"MGN replaced CloudEndure — Adrian's content is outdated",link:"https://docs.aws.amazon.com/mgn/latest/ug/what-is-application-migration-service.html",linkText:"AWS MGN docs",linkType:"must"},
+  {n:303,title:"Database Migration Service (DMS)",action:"watch",note:""},
+  {n:304,title:"[AdvancedDEMO] DMS - STAGE1",action:"watch",note:""},
+  {n:305,title:"[AdvancedDEMO] DMS - STAGE2",action:"watch",note:""},
+  {n:306,title:"[AdvancedDEMO] DMS - STAGE3 - PART1",action:"watch",note:""},
+  {n:307,title:"[AdvancedDEMO] DMS - STAGE3 - PART2",action:"watch",note:""},
+  {n:308,title:"[AdvancedDEMO] DMS - STAGE4",action:"watch",note:""},
+  {n:309,title:"[AdvancedDEMO] DMS - STAGE5",action:"watch",note:""},
+  {n:310,title:"Storage Gateway - Volume Gateway",action:"watch",note:"All 3 gateway types — exam decision scenarios"},
+  {n:311,title:"Storage Gateway - Tape Gateway (VTL)",action:"watch",note:""},
+  {n:312,title:"Storage Gateway - File Gateway",action:"watch",note:""},
+  {n:313,title:"AWS Snowball / Snowball Edge / Snowmobile",action:"watch",note:"When to pick which — data transfer decision"},
+  {n:314,title:"[Refresher] AWS Datasync",action:"watch",note:"vs Storage Gateway vs Snowball — tested"},
+  {n:315,title:"[ASSOCIATEREFRESHER] CloudFormation Physical and Logical Resources",action:"watch",note:"CFn is Pro exam heavy — watch all CFn videos"},
+  {n:316,title:"[DEMO] Simple Non Portable Template - PART1",action:"watch",note:""},
+  {n:317,title:"[DEMO] Simple Non Portable Template - PART2",action:"watch",note:""},
+  {n:318,title:"CloudFormation Template and Pseudo Parameters",action:"watch",note:""},
+  {n:319,title:"CloudFormation Intrinsic Functions",action:"watch",note:""},
+  {n:320,title:"CloudFormation Mappings",action:"watch",note:""},
+  {n:321,title:"CloudFormation Outputs",action:"watch",note:""},
+  {n:322,title:"[DEMO] Template v2 - Portable",action:"watch",note:""},
+  {n:323,title:"CloudFormation Conditions",action:"watch",note:""},
+  {n:324,title:"CloudFormation DependsOn",action:"watch",note:""},
+  {n:325,title:"CloudFormation Wait Conditions and cfn-signal",action:"watch",note:""},
+  {n:326,title:"CloudFormation Nested Stacks",action:"watch",note:"Nested vs cross-stack — exam scenario",link:"https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-nested-stacks.html",linkText:"Nested Stacks docs",linkType:"extra"},
+  {n:327,title:"CloudFormation Cross-Stack References",action:"watch",note:""},
+  {n:328,title:"CloudFormation Stack Sets",action:"watch",note:"Multi-account/region deployments — Pro topic",link:"https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/what-is-cfnstacksets.html",linkText:"StackSets docs",linkType:"extra"},
+  {n:329,title:"CloudFormation Deletion Policy",action:"watch",note:""},
+  {n:330,title:"CloudFormation Stack Roles",action:"watch",note:""},
+  {n:331,title:"CloudFormation Init (CFN-INIT)",action:"watch",note:""},
+  {n:332,title:"CloudFormation cfn-hup",action:"watch",note:""},
+  {n:333,title:"[DEMO] wait conditions cfnsignal cfninit cfnhup - PART1",action:"watch",note:""},
+  {n:334,title:"[DEMO] wait conditions cfnsignal cfninit cfnhup - PART2",action:"watch",note:""},
+  {n:335,title:"CloudFormation ChangeSets",action:"watch",note:""},
+  {n:336,title:"CloudFormation Custom Resources",action:"watch",note:"Lambda-backed custom resources — tested"},
+  {n:337,title:"[DEMO] CloudFormation Custom Resources - PART1",action:"watch",note:""},
+  {n:338,title:"[DEMO] CloudFormation Custom Resources - PART2",action:"watch",note:""},
+  {n:339,title:"Service Catalog",action:"watch",note:"Governance + approved products — Pro topic",link:"https://docs.aws.amazon.com/servicecatalog/latest/adminguide/introduction.html",linkText:"Service Catalog docs",linkType:"extra"},
+  {n:340,title:"CI/CD using AWS Code*",action:"watch",note:"Deployment pipeline overview"},
+  {n:341,title:"[UPDATE202104] AWS CodeCommit",action:"watch",note:""},
+  {n:342,title:"[UPDATE202104] AWS CodePipeline",action:"watch",note:""},
+  {n:343,title:"[UPDATE202104] AWS CodeBuild",action:"watch",note:""},
+  {n:344,title:"[UPDATE202104] AWS CodeDeploy",action:"watch",note:"Deployment strategies — blue/green, canary, rolling",link:"https://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configurations.html",linkText:"CodeDeploy deployment configs",linkType:"extra"},
+  {n:345,title:"[ASSOCIATEREFRESHER] Elastic Beanstalk Architecture",action:"watch",note:"EB deployment strategies — tested"},
+  {n:346,title:"[DEMO] Elastic Beanstalk - PART1",action:"watch",note:""},
+  {n:347,title:"[DEMO] Elastic Beanstalk - PART2",action:"watch",note:""},
+  {n:348,title:"Elastic Beanstalk Deployment Policies",action:"watch",note:"All-at-once vs rolling vs immutable — exam decision"},
+  {n:349,title:"[DEMO] Deployment Policies",action:"watch",note:""},
+  {n:350,title:"Elastic Beanstalk and RDS",action:"watch",note:"Decoupled vs coupled RDS — tested"},
+  {n:351,title:"Advanced Customisation via .ebextensions",action:"watch",note:""},
+  {n:352,title:"Elastic Beanstalk and HTTPS",action:"watch",note:""},
+  {n:353,title:"EB Cloning",action:"fast",note:""},
+  {n:354,title:"EB and Docker",action:"watch",note:""},
+  {n:355,title:"[DEMO] Section Cleanup",action:"skip",note:"Just cleanup"},
+  {n:356,title:"[NEW] OpsWorks",action:"watch",note:"Chef/Puppet managed — know when exam picks OpsWorks vs SSM",link:"https://docs.aws.amazon.com/opsworks/latest/userguide/welcome.html",linkText:"OpsWorks docs",linkType:"extra"},
+  {n:357,title:"AWS Systems Manager - Agent Architecture",action:"watch",note:"SSM is Pro exam heavy — watch all SSM videos",link:"https://docs.aws.amazon.com/systems-manager/latest/userguide/what-is-systems-manager.html",linkText:"SSM docs",linkType:"extra"},
+  {n:358,title:"AWS Systems Manager - Run Command",action:"watch",note:""},
+  {n:359,title:"AWS Systems Manager - Patch Manager",action:"watch",note:""},
+  {n:360,title:"[AdvancedDEMO] Systems Manager - STAGE1",action:"watch",note:""},
+  {n:361,title:"[AdvancedDEMO] Systems Manager - STAGE2",action:"watch",note:""},
+  {n:362,title:"[AdvancedDEMO] Systems Manager - STAGE3a",action:"watch",note:""},
+  {n:363,title:"[AdvancedDEMO] Systems Manager - STAGE3b",action:"watch",note:""},
+  {n:364,title:"[AdvancedDEMO] Systems Manager - STAGE4",action:"watch",note:""},
+  {n:365,title:"[AdvancedDEMO] Systems Manager - STAGE5",action:"watch",note:""},
+  {n:366,title:"AWS GuardDuty",action:"watch",note:"Threat detection — supplement: Security Hub after this (not in course)",link:"https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html",linkText:"Security Hub docs",linkType:"gap"},
+  {n:367,title:"AWS Config",action:"watch",note:"Compliance rules, conformance packs — tested",link:"https://docs.aws.amazon.com/config/latest/developerguide/WhatIsConfig.html",linkText:"AWS Config docs",linkType:"extra"},
+  {n:368,title:"AWS Inspector",action:"watch",note:"Inspector v2 (2022) is completely rewritten — scans ECR, Lambda too, not just EC2",link:"https://docs.aws.amazon.com/inspector/latest/user/what-is-inspector.html",linkText:"Inspector v2 docs",linkType:"must"},
+  {n:369,title:"Key Management Service (KMS)",action:"watch",note:"CMKs, key policies, multi-region keys — Pro exam heavy",link:"https://docs.aws.amazon.com/kms/latest/developerguide/overview.html",linkText:"KMS docs",linkType:"extra"},
+  {n:370,title:"[DEMO] KMS - Encrypting the battleplans",action:"watch",note:""},
+  {n:371,title:"CloudHSM",action:"watch",note:"vs KMS — when to use CloudHSM",link:"https://docs.aws.amazon.com/cloudhsm/latest/userguide/introduction.html",linkText:"CloudHSM docs",linkType:"extra"},
+  {n:372,title:"AWS Certificate Manager (ACM)",action:"watch",note:""},
+  {n:373,title:"[ASSOCIATESHARED] AWS Parameter Store",action:"watch",note:"vs Secrets Manager — exam decision",link:"https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html",linkText:"Parameter Store docs",linkType:"extra"},
+  {n:374,title:"[ASSOCIATESHARED] AWS Secrets Manager",action:"watch",note:"Rotation, cross-account — tested",link:"https://docs.aws.amazon.com/secretsmanager/latest/userguide/intro.html",linkText:"Secrets Manager docs",linkType:"extra"},
+  {n:375,title:"VPC Flow Logs and Flow Logs vs Packet Sniffing",action:"watch",note:""},
+  {n:376,title:"[ASSOCIATESHARED] AWS WAF and Shield",action:"watch",note:"WAFv2 replaced WAFv1 — Adrian covers v1 API, exam tests v2 managed rule groups",link:"https://docs.aws.amazon.com/waf/latest/developerguide/waf-chapter.html",linkText:"WAFv2 docs",linkType:"must"},
+  {n:377,title:"Types of DR - Cold Warm PilotLight",action:"watch",note:"DR patterns — Pro exam heavily tests this",link:"https://docs.aws.amazon.com/whitepapers/latest/disaster-recovery-workloads-on-aws/disaster-recovery-options-in-the-cloud.html",linkText:"AWS DR whitepaper",linkType:"extra"},
+  {n:378,title:"DR Architecture - Storage",action:"watch",note:""},
+  {n:379,title:"DR Architecture - Compute",action:"watch",note:""},
+  {n:380,title:"DR Architecture - Database",action:"watch",note:""},
+  {n:381,title:"DR Architecture - Networking",action:"watch",note:""},
+  {n:382,title:"Amazon Lex and Connect",action:"fast",note:"Contact center — know at high level"},
+  {n:383,title:"AWS Rekognition",action:"fast",note:"ML image/video — know when exam picks it"},
+  {n:384,title:"Kinesis Video Streams",action:"fast",note:""},
+  {n:385,title:"AWS Glue",action:"watch",note:"ETL service — tested, know vs EMR vs Athena",link:"https://docs.aws.amazon.com/glue/latest/dg/what-is-glue.html",linkText:"Glue docs",linkType:"extra"},
+  {n:386,title:"Device Farm",action:"fast",note:"Mobile testing — low exam weight"},
+  {n:387,title:"Question Technique - Example 1",action:"watch",note:"CRITICAL — do all 10 question technique videos before exam"},
+  {n:388,title:"Question Technique - Example 2",action:"watch",note:""},
+  {n:389,title:"Question Technique - Example 3",action:"watch",note:""},
+  {n:390,title:"Question Technique - Example 4",action:"watch",note:""},
+  {n:391,title:"Question Technique - Example 5",action:"watch",note:""},
+  {n:392,title:"Question Technique - Example 6",action:"watch",note:""},
+  {n:393,title:"Question Technique - Example 7",action:"watch",note:""},
+  {n:394,title:"Question Technique - Example 8",action:"watch",note:""},
+  {n:395,title:"Question Technique - Example 9",action:"watch",note:""},
+  {n:396,title:"Question Technique - Example 10",action:"watch",note:""},
+  {n:397,title:"WHATS NEXT",action:"skip",note:""},
+  {n:398,title:"THANKS and do me a favour",action:"skip",note:""},
+];
+
+// Supplement entries — insertAfter = study right after this lesson number
+const supplements = [
+  // ── Foundations ─────────────────────────────────────────────────────────
+  {n:"S2",title:"AWS Well-Architected Framework (GAP)",action:"supplement",insertAfter:4,
+   note:"6 pillars — Pro exam scenario framing. Read the WAF whitepaper before you start.",
+   link:"https://aws.amazon.com/architecture/well-architected/",linkText:"WAF site",linkType:"gap",
+   link2:"https://www.youtube.com/results?search_query=AWS+Well+Architected+Framework+SAP-C02",link2Text:"YouTube",link2Type:"gap"},
+  // ── Identity & Access ────────────────────────────────────────────────────
+  {n:"S1",title:"AWS Control Tower (GAP — not in course)",action:"supplement",insertAfter:17,
+   note:"Multi-account governance: landing zones, guardrails, SCPs. Adrian skips this entirely. Tested on Pro.",
+   link:"https://docs.aws.amazon.com/controltower/latest/userguide/what-is-control-tower.html",linkText:"Control Tower docs",linkType:"gap",
+   link2:"https://www.youtube.com/results?search_query=AWS+Control+Tower+deep+dive+SAP-C02",link2Text:"YouTube",link2Type:"gap"},
+  {n:"S12",title:"IAM Identity Center — current features (OUTDATED in course)",action:"supplement",insertAfter:59,
+   note:"Adrian calls it AWS SSO. Renamed to IAM Identity Center 2022. Permission sets, attribute-based access, multi-account assignment all tested.",
+   link:"https://docs.aws.amazon.com/singlesignon/latest/userguide/what-is.html",linkText:"IAM Identity Center docs",linkType:"must",
+   link2:"https://www.youtube.com/results?search_query=IAM+Identity+Center+AWS+SAP-C02",link2Text:"YouTube",link2Type:"must"},
+  // ── Networking ───────────────────────────────────────────────────────────
+  {n:"S31",title:"TGW Connect — SD-WAN integration (GAP — post-2021)",action:"supplement",insertAfter:90,
+   note:"TGW Connect attachment lets SD-WAN appliances peer over GRE. SAP-C02 hybrid connectivity scenario.",
+   link:"https://docs.aws.amazon.com/vpc/latest/tgw/tgw-connect.html",linkText:"TGW Connect docs",linkType:"gap"},
+  {n:"S32",title:"AWS Verified Access (GAP — post-2022)",action:"supplement",insertAfter:140,
+   note:"Zero-trust app access without VPN. New service, showing up in Pro exam remote workforce scenarios.",
+   link:"https://docs.aws.amazon.com/verified-access/latest/ug/what-is-verified-access.html",linkText:"Verified Access docs",linkType:"gap"},
+  {n:"S13",title:"AWS Network Firewall (GAP — not in course)",action:"supplement",insertAfter:155,
+   note:"Managed stateful/stateless firewall for VPCs. Exam scenario: centralized inspection VPC with TGW. Adrian has zero coverage.",
+   link:"https://docs.aws.amazon.com/network-firewall/latest/developerguide/what-is-aws-network-firewall.html",linkText:"Network Firewall docs",linkType:"gap",
+   link2:"https://www.youtube.com/results?search_query=AWS+Network+Firewall+centralized+inspection+VPC+SAP-C02",link2Text:"YouTube",link2Type:"gap"},
+  {n:"S25",title:"AWS Outposts (GAP — barely covered)",action:"supplement",insertAfter:155,
+   note:"Hybrid — AWS rack in your DC. Pro exam: when to pick Outposts vs Local Zones vs Wavelength vs DX.",
+   link:"https://docs.aws.amazon.com/outposts/latest/userguide/what-is-outposts.html",linkText:"Outposts docs",linkType:"gap"},
+  // ── Storage ──────────────────────────────────────────────────────────────
+  {n:"S14",title:"S3 Object Lambda (GAP — post-2021)",action:"supplement",insertAfter:173,
+   note:"Transform S3 data on the fly with Lambda during GetObject. Pro exam: custom access patterns without copying data.",
+   link:"https://docs.aws.amazon.com/AmazonS3/latest/userguide/transforming-objects.html",linkText:"S3 Object Lambda docs",linkType:"gap"},
+  // ── Compute ──────────────────────────────────────────────────────────────
+  {n:"S15",title:"EC2 Image Builder (GAP — post-2021)",action:"supplement",insertAfter:191,
+   note:"Golden AMI pipeline: automated patching, compliance validation, multi-region distribution. No coverage in Adrian.",
+   link:"https://docs.aws.amazon.com/imagebuilder/latest/userguide/what-is-image-builder.html",linkText:"Image Builder docs",linkType:"gap"},
+  {n:"S11",title:"Compute Optimizer + Savings Plans (GAP — partial in course)",action:"supplement",insertAfter:194,
+   note:"Savings Plans replaced most RI complexity. Compute vs EC2 vs SageMaker plans — exam cost optimization decision.",
+   link:"https://docs.aws.amazon.com/compute-optimizer/latest/ug/what-is-compute-optimizer.html",linkText:"Compute Optimizer docs",linkType:"gap",
+   link2:"https://docs.aws.amazon.com/savingsplans/latest/userguide/what-is-savings-plans.html",link2Text:"Savings Plans docs",link2Type:"gap"},
+  {n:"S30",title:"Cost Anomaly Detection (GAP — post-2021)",action:"supplement",insertAfter:194,
+   note:"ML-based cost spike alerts. Pro exam cost governance scenario. Quick 15-min read.",
+   link:"https://docs.aws.amazon.com/cost-management/latest/userguide/getting-started-ad.html",linkText:"Cost Anomaly Detection docs",linkType:"gap"},
+  // ── Containers ───────────────────────────────────────────────────────────
+  {n:"S20",title:"AWS App Runner (GAP — post-2021)",action:"supplement",insertAfter:242,
+   note:"Managed container/code deploy — simpler than ECS Fargate. Pro exam: when to pick App Runner vs Fargate vs Lambda.",
+   link:"https://docs.aws.amazon.com/apprunner/latest/dg/what-is-apprunner.html",linkText:"App Runner docs",linkType:"gap"},
+  // ── Databases ────────────────────────────────────────────────────────────
+  {n:"S18",title:"RDS Proxy (GAP — post-2021)",action:"supplement",insertAfter:213,
+   note:"Connection pooling for Lambda→RDS. Pro exam: serverless + relational DB without exhausting connections. Zero coverage in Adrian.",
+   link:"https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy.html",linkText:"RDS Proxy docs",linkType:"gap",
+   link2:"https://www.youtube.com/results?search_query=RDS+Proxy+Lambda+architecture+AWS",link2Text:"YouTube",link2Type:"gap"},
+  {n:"S17",title:"Aurora Serverless v2 (OUTDATED — course covers v1 only)",action:"supplement",insertAfter:215,
+   note:"v2 is fundamentally different from v1: instant scaling, no cold starts, supports all Aurora features including Global DB. SAP-C02 tests v2.",
+   link:"https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2.html",linkText:"Aurora Serverless v2 docs",linkType:"must",
+   link2:"https://www.youtube.com/results?search_query=Aurora+Serverless+v2+vs+v1+differences",link2Text:"YouTube",link2Type:"must"},
+  {n:"S16",title:"DynamoDB Standard-IA table class (GAP — post-2021)",action:"supplement",insertAfter:226,
+   note:"Up to 60% cheaper for infrequently accessed tables. Pro exam cost optimization for DynamoDB.",
+   link:"https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.TableClasses.html",linkText:"DynamoDB table classes docs",linkType:"gap"},
+  {n:"S19",title:"Amazon OpenSearch Service (OUTDATED — course uses Elasticsearch name)",action:"supplement",insertAfter:234,
+   note:"Renamed from Amazon Elasticsearch Service 2021. Same service + OpenSearch fork. Know for log analytics and search scenarios on Pro.",
+   link:"https://docs.aws.amazon.com/opensearch-service/latest/developerguide/what-is.html",linkText:"OpenSearch docs",linkType:"must"},
+  // ── Analytics ────────────────────────────────────────────────────────────
+  {n:"S8",title:"AWS Trusted Advisor (GAP — not in course)",action:"supplement",insertAfter:237,
+   note:"5 check categories: cost, performance, security, fault tolerance, service limits. Pro exam governance scenarios.",
+   link:"https://docs.aws.amazon.com/awssupport/latest/user/trusted-advisor.html",linkText:"Trusted Advisor docs",linkType:"gap"},
+  // ── Serverless ───────────────────────────────────────────────────────────
+  {n:"S22",title:"Lambda SnapStart (GAP — post-2022)",action:"supplement",insertAfter:252,
+   note:"Java cold start elimination via snapshot. Pro exam latency-sensitive Java Lambda scenario. Quick read.",
+   link:"https://docs.aws.amazon.com/lambda/latest/dg/snapstart.html",linkText:"Lambda SnapStart docs",linkType:"gap"},
+  {n:"S7",title:"AWS X-Ray (GAP — not in course)",action:"supplement",insertAfter:264,
+   note:"Distributed tracing for serverless/microservices. Know: when exam picks X-Ray vs CloudWatch Insights vs Synthetics.",
+   link:"https://docs.aws.amazon.com/xray/latest/devguide/aws-xray.html",linkText:"X-Ray docs",linkType:"gap"},
+  {n:"S23",title:"EventBridge Pipes (GAP — post-2022)",action:"supplement",insertAfter:264,
+   note:"Point-to-point event routing with filtering + enrichment. Pro exam: replaces complex Lambda glue code between services.",
+   link:"https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-pipes.html",linkText:"EventBridge Pipes docs",linkType:"gap"},
+  // ── Migration ────────────────────────────────────────────────────────────
+  {n:"S21",title:"AWS Backup (GAP — not in course)",action:"supplement",insertAfter:312,
+   note:"Centralized backup policy across EC2, EBS, RDS, DynamoDB, EFS, FSx, S3. Pro exam: org-level backup governance.",
+   link:"https://docs.aws.amazon.com/aws-backup/latest/devguide/whatisbackup.html",linkText:"AWS Backup docs",linkType:"gap",
+   link2:"https://www.youtube.com/results?search_query=AWS+Backup+cross-account+organization+SAP-C02",link2Text:"YouTube",link2Type:"gap"},
+  {n:"S4",title:"Application Migration Service MGN (OUTDATED — replaces CloudEndure)",action:"supplement",insertAfter:302,
+   note:"CloudEndure Migration was replaced by AWS MGN in 2021. SAP-C02 references MGN. Adrian's lesson 302 is outdated.",
+   link:"https://docs.aws.amazon.com/mgn/latest/ug/what-is-application-migration-service.html",linkText:"AWS MGN docs",linkType:"must",
+   link2:"https://www.youtube.com/results?search_query=AWS+Application+Migration+Service+MGN+SAP-C02",link2Text:"YouTube",link2Type:"must"},
+  {n:"S10",title:"VMware Cloud on AWS (GAP — hybrid migration scenario)",action:"supplement",insertAfter:302,
+   note:"Extend VMware SDDC to AWS without re-platforming. Niche but appears in Pro hybrid migration scenarios.",
+   link:"https://docs.aws.amazon.com/vmware/latest/userguide/what-is.html",linkText:"VMware Cloud docs",linkType:"gap"},
+  {n:"S9",title:"AWS Migration Hub (GAP — not in course)",action:"supplement",insertAfter:314,
+   note:"Central dashboard tracking migrations across MGN, DMS, etc. Pro exam multi-service migration orchestration.",
+   link:"https://docs.aws.amazon.com/migrationhub/latest/ug/what-is-migrationhub.html",linkText:"Migration Hub docs",linkType:"gap"},
+  {n:"S24",title:"AWS Transfer Family (GAP — not in course)",action:"supplement",insertAfter:314,
+   note:"Managed SFTP/FTPS/FTP/AS2 over S3 or EFS. Pro exam: legacy partner file transfer migration to AWS.",
+   link:"https://docs.aws.amazon.com/transfer/latest/userguide/what-is-aws-transfer-family.html",linkText:"Transfer Family docs",linkType:"gap"},
+  // ── Security ─────────────────────────────────────────────────────────────
+  {n:"S5",title:"Security Hub (GAP — not in course)",action:"supplement",insertAfter:366,
+   note:"Central security findings from GuardDuty, Inspector, Macie, Config. Key flow: finding → EventBridge → Lambda remediation. Critical for Pro.",
+   link:"https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html",linkText:"Security Hub docs",linkType:"gap",
+   link2:"https://www.youtube.com/results?search_query=AWS+Security+Hub+GuardDuty+remediation+architecture",link2Text:"YouTube",link2Type:"gap"},
+  {n:"S26",title:"Amazon Detective (GAP — not in course)",action:"supplement",insertAfter:366,
+   note:"Security investigation: pulls GuardDuty + CloudTrail + VPC Flow Logs into a graph. Pro exam: GuardDuty finds it, Detective investigates it.",
+   link:"https://docs.aws.amazon.com/detective/latest/adminguide/what-is-detective.html",linkText:"Detective docs",linkType:"gap"},
+  {n:"S27",title:"Amazon Macie v2 (GAP — no coverage in course)",action:"supplement",insertAfter:368,
+   note:"S3 sensitive data discovery (PII, PHI, credentials). Macie v2 is completely rewritten from v1. Pro exam: data privacy compliance.",
+   link:"https://docs.aws.amazon.com/macie/latest/user/what-is-macie.html",linkText:"Macie v2 docs",linkType:"gap",
+   link2:"https://www.youtube.com/results?search_query=Amazon+Macie+v2+S3+sensitive+data+SAP-C02",link2Text:"YouTube",link2Type:"gap"},
+  // ── DR / Resilience ──────────────────────────────────────────────────────
+  {n:"S29",title:"AWS Resilience Hub (GAP — post-2021)",action:"supplement",insertAfter:377,
+   note:"Analyze and validate app resilience, get RTO/RPO score. Pro exam DR governance scenario.",
+   link:"https://docs.aws.amazon.com/resilience-hub/latest/userguide/what-is.html",linkText:"Resilience Hub docs",linkType:"gap"},
+  {n:"S3",title:"AWS Elastic Disaster Recovery DRS (OUTDATED — replaces CloudEndure DR)",action:"supplement",insertAfter:381,
+   note:"Replaced CloudEndure Disaster Recovery 2022. Continuous block-level replication. Know vs Pilot Light vs Backup/Restore for RTO/RPO.",
+   link:"https://docs.aws.amazon.com/drs/latest/userguide/what-is-drs.html",linkText:"AWS DRS docs",linkType:"must"},
+  {n:"S28",title:"AWS Fault Injection Simulator FIS (GAP — post-2021)",action:"supplement",insertAfter:381,
+   note:"Chaos engineering: inject faults into EC2, ECS, EKS, RDS. Pro exam: testing resilience before declaring architecture complete.",
+   link:"https://docs.aws.amazon.com/fis/latest/userguide/what-is.html",linkText:"FIS docs",linkType:"gap"},
+  // ── Analytics / Data ─────────────────────────────────────────────────────
+  {n:"S6",title:"AWS Lake Formation (GAP — not in course)",action:"supplement",insertAfter:385,
+   note:"Data lake governance on S3+Glue. Study right after Glue — it builds on it. Fine-grained column/row-level data access control.",
+   link:"https://docs.aws.amazon.com/lake-formation/latest/dg/what-is-lake-formation.html",linkText:"Lake Formation docs",linkType:"gap"},
+];
+
+// Map: lesson number → array of supplement IDs that follow it
+const suppAfterLesson = {};
+supplements.forEach(s => {
+  if (!suppAfterLesson[s.insertAfter]) suppAfterLesson[s.insertAfter] = [];
+  suppAfterLesson[s.insertAfter].push(s.n);
+});
+const hasSupplementAfter = new Set(supplements.map(s => s.insertAfter));
+
+// Sort all data: lessons by n, supplements right after their insertAfter lesson
+const allData = [...lessons, ...supplements].sort((a, b) => {
+  const aKey = typeof a.n === 'number' ? a.n : (a.insertAfter ?? 999) + 0.5;
+  const bKey = typeof b.n === 'number' ? b.n : (b.insertAfter ?? 999) + 0.5;
+  return aKey - bKey;
+});
+let filter = 'all';
+let checks = JSON.parse(localStorage.getItem('aws_lesson_checks_v1') || '{}');
+let myNotes = JSON.parse(localStorage.getItem('aws_lesson_notes_v1') || '{}');
+
+function saveNote(id, val) {
+  if (val.trim()) myNotes[id] = val.trim();
+  else delete myNotes[id];
+  localStorage.setItem('aws_lesson_notes_v1', JSON.stringify(myNotes));
+  render();
+}
+
+function toggleNoteInput(id) {
+  const el = document.getElementById('ni-'+id);
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  if (el.style.display === 'block') el.focus();
+}
+
+function setFilter(f, btn) {
+  filter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function jumpToSupp(sid) {
+  // Switch to all view so the supplement row exists in DOM
+  filter = 'all';
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.textContent.trim()==='All'));
+  render();
+  setTimeout(() => {
+    const el = document.getElementById('row-' + sid);
+    if (el) { el.scrollIntoView({behavior:'smooth', block:'center'}); el.style.outline='2px solid #f0a040'; setTimeout(()=>el.style.outline='',1500); }
+  }, 50);
+}
+
+function toggleCheck(id) {
+  checks[id] = !checks[id];
+  localStorage.setItem('aws_lesson_checks_v1', JSON.stringify(checks));
+  render();
+}
+
+function render() {
+  const total = allData.length;
+  const w = allData.filter(l=>l.action==='watch').length;
+  const f = allData.filter(l=>l.action==='fast').length;
+  const s = allData.filter(l=>l.action==='skip').length;
+  const sup = allData.filter(l=>l.action==='supplement').length;
+  const ds = allData.filter(l=>l.action==='demo-skip').length;
+  const done = allData.filter(l=>checks[l.n]).length;
+  const pct = Math.round((done/total)*100);
+
+  document.getElementById('t').textContent = total;
+  document.getElementById('w').textContent = w;
+  document.getElementById('f').textContent = f;
+  document.getElementById('s').textContent = s;
+  document.getElementById('sup').textContent = sup;
+  document.getElementById('ds').textContent = ds;
+  document.getElementById('done').textContent = done;
+  document.getElementById('pct').textContent = pct+'%';
+  document.getElementById('bar').style.width = pct+'%';
+
+  const filtered = allData.filter(l => {
+    if (filter === 'all') return true;
+    if (filter === 'undone') return !checks[l.n];
+    return l.action === filter;
+  });
+
+  const badgeClass = {watch:'watch',fast:'fast',skip:'skip',supplement:'supplement','demo-skip':'demo-skip'};
+  const badgeLabel = {watch:'▶ Watch',fast:'⚡ Fast (1.75x)',skip:'⏭ Skip',supplement:'📖 Supplement','demo-skip':'⏸ Demo-Skip'};
+
+  let html = '<table><thead><tr><th class="check-col">✓</th><th class="num-col">#</th><th>Lesson title</th><th class="action-col">Action</th></tr></thead><tbody>';
+
+  filtered.forEach(l => {
+    const id = l.n;
+    const isDone = checks[id];
+    const bc = badgeClass[l.action];
+    const bl = badgeLabel[l.action];
+    const ltBadge = t => t==='must'?'<span class="lt lt-must">OUTDATED</span>':t==='gap'?'<span class="lt lt-gap">GAP</span>':'<span class="lt lt-extra">EXTRA</span>';
+  const noteHtml = l.note ? `<div class="note">${l.note}${l.link ? ` → <a href="${l.link}" target="_blank">${l.linkText}</a>${ltBadge(l.linkType||'extra')}` : ''}${l.link2 ? ` · <a href="${l.link2}" target="_blank">${l.link2Text}</a>${ltBadge(l.link2Type||'extra')}` : ''}</div>` : '';
+
+    const suppLinks = (typeof l.n === 'number' && suppAfterLesson[l.n])
+      ? suppAfterLesson[l.n].map(sid => {
+          const s = allData.find(x => x.n === sid);
+          if (!s) return '';
+          const tipLinks = [
+            s.link ? `<a href="${s.link}" target="_blank">${s.linkText}</a>` : '',
+            s.link2 ? `<a href="${s.link2}" target="_blank">${s.link2Text}</a>` : ''
+          ].filter(Boolean).join('');
+          return `<a href="#row-${sid}" class="lt lt-gap" onclick="jumpToSupp('${sid}')" style="font-size:10px;text-decoration:none">+supp<span class="supp-tip"><div class="supp-tip-title">${s.title}</div><div class="supp-tip-note">${s.note||''}</div><div class="supp-tip-links">${tipLinks}</div></span></a>`;
+        }).join(' ')
+      : '';
+    const existingNote = myNotes[id];
+    const noteTip = existingNote ? `<span class="note-tip">${existingNote.replace(/</g,'&lt;')}</span>` : '';
+    const noteBtn = `<button class="note-btn${existingNote?' has-note':''}" onclick="toggleNoteInput('${id}')" title="${existingNote?'edit note':'add note'}">📝${noteTip}</button>`;
+    const noteInputHtml = `<textarea id="ni-${id}" class="note-input" style="display:none" placeholder="your note… (Escape to save)" onblur="saveNote('${id}',this.value)" onkeydown="if(event.key==='Escape')this.blur()">${existingNote||''}</textarea>`;
+    html += `<tr id="row-${l.n}" class="${isDone?'done':''}">
+      <td class="check-col"><input type="checkbox" ${isDone?'checked':''} onchange="toggleCheck('${id}')" aria-label="done"></td>
+      <td class="num-col">${l.n}</td>
+      <td><span class="lesson-title">${l.title}</span>${noteBtn}${suppLinks ? ' '+suppLinks : ''}${noteHtml}${noteInputHtml}</td>
+      <td><span class="badge ${bc}">${bl}</span></td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  document.getElementById('tc').innerHTML = html;
+}
+
+render();
+</script>
+</div>
+</body>
+</html>
